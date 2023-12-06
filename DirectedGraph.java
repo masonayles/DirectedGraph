@@ -1,3 +1,5 @@
+import java.util.Iterator;
+
 /**
  * Abstract class representing a directed graph with vertices and edges.
  *

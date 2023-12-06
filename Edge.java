@@ -1,7 +1,9 @@
 /**
+ * Class Edge represents a directed edge in a graph. It holds references to the source and destination
+ * vertices and has a label of generic type.
  *
- * @param <V>
- * @param <E>
+ * @param <V> The type of the vertex labels
+ * @param <E> The type of the edge label
  */
 public class Edge <V,E>
 {
