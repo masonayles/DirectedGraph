@@ -1,7 +1,4 @@
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  *  MatrixGraph is a concrete implementation of DirectedGraph.
@@ -12,7 +9,7 @@ public class MatrixGraph<V,E> extends DirectedGraph<V,E>
 {
     private List<Vertex<V>> _vertices;
     private E[][] _adjacencyMatrix;
-    private Map<Vertex<V>, Integer> _vertexIndices;
+    private Map<V, Integer> _vertexIndices;
 
     /**
      * Constructs a new MatrixGraph.
@@ -26,32 +23,103 @@ public class MatrixGraph<V,E> extends DirectedGraph<V,E>
 
     /**
      *
-     * @param vertex
+     * @param v v is the vertex label.
      */
-    public void add(Vertex<V> vertex)
-    {
-        if (vertex == null || _vertexIndices.containsKey(vertex.getLabel()))
+    @Override
+    public void add(V v) {
+        if (v == null || _vertexIndices.containsKey(v))
         {
-            throw new DuplicateVertexException("Vertex already exists.");
+            throw new DuplicateVertexException();
         }
-        if (_vertices.size() == _adjacencyMatrix.length)
-        {
+        Vertex<V> vertex = new Vertex<>(v); // Create a new Vertex object
+        _vertices.add(vertex);
+        _vertexIndices.put(v, _vertices.size() - 1);
+        // Ensure the adjacency matrix is large enough to accommodate the new vertex
+        if (_vertices.size() > _adjacencyMatrix.length) {
             grow();
         }
-        _vertices.add(vertex);
-        _vertexIndices.put(vertex.getLabel(), _vertices.size() - 1);
     }
 
-    public void addEdge(Vertex<V> from, Vertex<V> to, E label)
+    /**
+     *
+     * @param v v is the label of the vertex to check.
+     * @return
+     */
+    @Override
+    public boolean contains(V v)
     {
-        Integer fromIndex = _vertexIndices.get(from.getLabel());
-        Integer toIndex = _vertexIndices.get(to.getLabel());
+        return _vertexIndices.containsKey(v);
+    }
 
-        if (fromIndex == null || toIndex == null)
+    /**
+     *
+     * @param v the label of the vertex to retrieve
+     * @return
+     */
+    @Override
+    public Vertex<V> get(V v)
+    {
+        Integer index = _vertexIndices.get(v);
+        if (index == null)
+        {
+            throw new NoSuchVertexException();
+        }
+        return _vertices.get(index);
+    }
+
+
+    /**
+     *
+     * @param v v is the vertex label to be removed.
+     * @return
+     */
+    @Override
+    public V remove(V v)
+    {
+        if (v == null || !_vertexIndices.containsKey(v))
         {
             throw new NoSuchVertexException();
         }
 
+        int indexToRemove = _vertexIndices.get(v);
+        _vertexIndices.remove(v);
+        _vertices.remove(indexToRemove);
+
+        // Shift rows and columns in the adjacency matrix
+        for (int i = indexToRemove; i < _vertices.size(); i++)
+        {
+            _vertexIndices.put(_vertices.get(i).getLabel(), i);
+        }
+
+        // Adjust the adjacency matrix
+        removeMatrixRow(indexToRemove);
+        removeMatrixColumn(indexToRemove);
+
+        // Return the label of the removed vertex
+        return v;
+    }
+
+
+    /**
+     *
+     * @param from
+     * @param to
+     * @param label
+     */
+    @Override
+    public void addEdge(V from, V to, E label)
+    {
+        Integer fromIndex = _vertexIndices.get(from);
+        Integer toIndex = _vertexIndices.get(to);
+
+        if (fromIndex == null)
+        {
+            throw new NoSuchVertexException();
+        }
+        if (toIndex == null)
+        {
+            throw new NoSuchVertexException();
+        }
         if (_adjacencyMatrix[fromIndex][toIndex] != null)
         {
             throw new DuplicateEdgeException();
@@ -62,24 +130,15 @@ public class MatrixGraph<V,E> extends DirectedGraph<V,E>
 
     /**
      *
-     * @param vertex
-     * @return
-     */
-    public boolean contains(Vertex<V> vertex)
-    {
-        return vertex != null && _vertexIndices.containsKey(vertex.getLabel());
-    }
-
-    /**
-     *
      * @param from
      * @param to
      * @return
      */
-    public boolean containsEdge(Vertex<V> from, Vertex<V> to)
+    @Override
+    public boolean containsEdge(V from, V to)
     {
-        Integer fromIndex = _vertexIndices.get(from.getLabel());
-        Integer toIndex = _vertexIndices.get(to.getLabel());
+        Integer fromIndex = _vertexIndices.get(from);
+        Integer toIndex = _vertexIndices.get(to);
 
         if (fromIndex == null || toIndex == null)
         {
@@ -89,14 +148,188 @@ public class MatrixGraph<V,E> extends DirectedGraph<V,E>
         return _adjacencyMatrix[fromIndex][toIndex] != null;
     }
 
+    /**
+     * @param u The label of the source vertex.
+     * @param v The label of the destination vertex.
+     * @return An Edge<V, E> object representing the edge from 'u' to 'v'.
+     */
+    @Override
+    public Edge<V, E> getEdge(V u, V v) throws NoSuchVertexException, NoSuchEdgeException {
+        Integer fromIndex = _vertexIndices.get(u);
+        Integer toIndex = _vertexIndices.get(v);
+
+        if (fromIndex == null) {
+            throw new NoSuchVertexException("Source vertex with label '" + u + "' does not exist.");
+        }
+        if (toIndex == null) {
+            throw new NoSuchVertexException("Destination vertex with label '" + v + "' does not exist.");
+        }
+
+        E edgeLabel = _adjacencyMatrix[fromIndex][toIndex];
+        if (edgeLabel == null) {
+            throw new NoSuchEdgeException("Edge from '" + u + "' to '" + v + "' does not exist.");
+        }
+
+        return new Edge<>(_vertices.get(fromIndex), _vertices.get(toIndex), edgeLabel);
+    }
 
 
 
 
+    public E removeEdge(V from, V to) {
+        Integer fromIndex = _vertexIndices.get(from);
+        Integer toIndex = _vertexIndices.get(to);
+
+        if (fromIndex == null || toIndex == null) {
+            throw new NoSuchVertexException("One or more vertices not found.");
+        }
+
+        if (_adjacencyMatrix[fromIndex][toIndex] == null) {
+            throw new NoSuchEdgeException("Edge not found from " + from + " to " + to + ".");
+        }
+
+        _adjacencyMatrix[fromIndex][toIndex] = null;
+    }
 
 
+    @Override
+    public int degree(V v)
+    {
+        Integer index = _vertexIndices.get(vertex.getLabel());
+        if (index == null)
+        {
+            throw new NoSuchVertexException("Vertex not found.");
+        }
 
+        int degree = 0;
+        for (E edge : _adjacencyMatrix[index])
+        {
+            if (edge != null)
+            {
+                degree++;
+            }
+        }
+        return degree;
+    }
 
+    /**
+     *
+     * @return
+     */
+    @Override
+    public Iterator<Vertex<V>> vertices()
+    {
+        return new ArrayList<>(_vertices).iterator();
+    }
+
+    /**
+     *
+     * @param v the label of the vertex whose adjacent vertices are to be iterated over
+     * @return
+     * @throws NoSuchVertexException
+     */
+    @Override
+    public Iterator<Vertex<V>> adjacent(V v) throws NoSuchVertexException
+    {
+        List<Vertex<V>> adjacentVertices = new ArrayList<>();
+
+        Integer index = _vertexIndices.get(v);
+        if (index == null) {
+            throw new NoSuchVertexException("Vertex with label '" + v + "' not found.");
+        }
+
+        for (int i = 0; i < _adjacencyMatrix[index].length; i++)
+        {
+            if (_adjacencyMatrix[index][i] != null) { // There is an edge from v to vertex at index i
+                adjacentVertices.add(_vertices.get(i));
+            }
+        }
+
+        return adjacentVertices.iterator();
+    }
+
+    /**
+     *
+     * @return
+     */
+    @Override
+    public Iterator<Edge<V, E>> edges()
+    {
+        List<Edge<V, E>> allEdges = new ArrayList<>();
+
+        for (int i = 0; i < _adjacencyMatrix.length; i++)
+        {
+            for (int j = 0; j < _adjacencyMatrix[i].length; j++)
+            {
+                if (_adjacencyMatrix[i][j] != null)
+                {
+                    Vertex<V> source = _vertices.get(i);
+                    Vertex<V> destination = _vertices.get(j);
+                    E label = _adjacencyMatrix[i][j];
+                    allEdges.add(new Edge<>(source, destination, label));
+                }
+            }
+        }
+        return allEdges.iterator();
+    }
+
+    /**
+     *
+     * @return
+     */
+    @Override
+    public int size()
+    {
+        return _vertices.size();
+    }
+
+    /**
+     *
+     * @return
+     */
+    @Override
+    public boolean isEmpty()
+    {
+        return _vertices.isEmpty();
+    }
+
+    /**
+     *
+     */
+    @Override
+    public void clear()
+    {
+        _vertices.clear();
+        _vertexIndices.clear();
+        _adjacencyMatrix = (E[][]) new Object[10][10];
+    }
+
+    /**
+     *
+     * @param rowIndex
+     */
+    private void removeMatrixRow(int rowIndex)
+    {
+        for (int i = rowIndex; i < _vertices.size(); i++)
+        {
+            System.arraycopy(_adjacencyMatrix[i + 1], 0, _adjacencyMatrix[i], 0, _adjacencyMatrix[i].length);
+        }
+    }
+
+    /**
+     *
+     * @param columnIndex
+     */
+    private void removeMatrixColumn(int columnIndex)
+    {
+        for (E[] row : _adjacencyMatrix)
+        {
+            for (int i = columnIndex; i < row.length - 1; i++)
+            {
+                row[i] = row[i + 1];
+            }
+        }
+    }
 
     /**
      * Resizes the adjacency matrix to accommodate more vertices.
@@ -110,5 +343,25 @@ public class MatrixGraph<V,E> extends DirectedGraph<V,E>
             System.arraycopy(_adjacencyMatrix[i], 0, newMatrix[i], 0, _adjacencyMatrix[i].length);
         }
         _adjacencyMatrix = newMatrix;
+    }
+
+    /**
+     *
+     * @return
+     */
+    @Override
+    public int edgeCount()
+    {
+        int count = 0;
+        for (int i = 0; i < _adjacencyMatrix.length; i++)
+        {
+            for (int j = 0; j < _adjacencyMatrix[i].length; j++)
+            {
+                if (_adjacencyMatrix[i][j] != null) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 }

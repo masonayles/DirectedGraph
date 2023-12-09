@@ -13,7 +13,7 @@ public class Vertex <V>
      * @param label The label of the vertex
      * @throws IllegalArgumentException if the label is null
      */
-    public void Vertex(V label)
+    public Vertex(V label)
     {
         if (label == null) {
             throw new IllegalArgumentException("Vertex label cannot be null.");
