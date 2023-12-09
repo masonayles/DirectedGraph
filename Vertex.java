@@ -5,7 +5,6 @@
  */
 public class Vertex <V>
 {
-
     private V label;
 
     /**
@@ -16,7 +15,10 @@ public class Vertex <V>
      */
     public void Vertex(V label)
     {
-
+        if (label == null) {
+            throw new IllegalArgumentException("Vertex label cannot be null.");
+        }
+        this.label = label;
     }
 
     /**
@@ -51,11 +53,23 @@ public class Vertex <V>
      */
     public boolean equals(Vertex<V> o)
     {
+        if (this ==o) return true;
+        if (o == null) return false;
 
+        if (label == null)
+        {
+            return o.getLabel() == null;
+        }
+        else
+        {
+            return label.equals(o.getLabel());
+        }
     }
 
     /**
-     * Returns a hash code for this vertex. The hash code for a Vertex object is computed as
+     * Returns a hash code for this vertex. Did a good bit of research on WSSCHOOLS and I thought this
+     * would be a good idea for the structure of the program.
+     * The hash code for a Vertex object is computed as
      * the hash code of the label, as defined by the hashCode method of the Object class.
      *
      * @return a hash code value for this Vertex.
