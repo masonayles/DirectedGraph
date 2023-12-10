@@ -69,6 +69,17 @@ public class Edge<V, E>
         return _label;
     }
 
+
+    /**
+     * Gets the destination vertex of this edge.
+     *
+     * @return The destination vertex.
+     */
+    public Vertex<V> getDestination()
+    {
+        return _destination;
+    }
+
     /**
      * Sets the label of this edge.
      *
