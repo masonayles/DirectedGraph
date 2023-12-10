@@ -22,20 +22,22 @@ public class MatrixGraph<V,E> extends DirectedGraph<V,E>
     }
 
     /**
-     *
+     * Adds a vertax at the given label.
      * @param v v is the vertex label.
      */
     @Override
-    public void add(V v) {
+    public void add(V v)
+    {
         if (v == null || _vertexIndices.containsKey(v))
         {
             throw new DuplicateVertexException();
         }
-        Vertex<V> vertex = new Vertex<>(v); // Create a new Vertex object
+        Vertex<V> vertex = new Vertex<>(v);
         _vertices.add(vertex);
         _vertexIndices.put(v, _vertices.size() - 1);
-        // Ensure the adjacency matrix is large enough to accommodate the new vertex
-        if (_vertices.size() > _adjacencyMatrix.length) {
+
+        if (_vertices.size() > _adjacencyMatrix.length)
+        {
             grow();
         }
     }
@@ -154,51 +156,67 @@ public class MatrixGraph<V,E> extends DirectedGraph<V,E>
      * @return An Edge<V, E> object representing the edge from 'u' to 'v'.
      */
     @Override
-    public Edge<V, E> getEdge(V u, V v) throws NoSuchVertexException, NoSuchEdgeException {
+    public Edge<V, E> getEdge(V u, V v) throws NoSuchVertexException, NoSuchEdgeException
+    {
         Integer fromIndex = _vertexIndices.get(u);
         Integer toIndex = _vertexIndices.get(v);
 
         if (fromIndex == null) {
             throw new NoSuchVertexException("Source vertex with label '" + u + "' does not exist.");
         }
-        if (toIndex == null) {
+        if (toIndex == null)
+        {
             throw new NoSuchVertexException("Destination vertex with label '" + v + "' does not exist.");
         }
 
         E edgeLabel = _adjacencyMatrix[fromIndex][toIndex];
-        if (edgeLabel == null) {
+        if (edgeLabel == null)
+        {
             throw new NoSuchEdgeException("Edge from '" + u + "' to '" + v + "' does not exist.");
         }
 
         return new Edge<>(_vertices.get(fromIndex), _vertices.get(toIndex), edgeLabel);
     }
 
-
-
-
-    public E removeEdge(V from, V to) {
+    /**
+     *
+     * @param from the label of the source vertex
+     * @param to the label of the destination vertex
+     * @return
+     */
+    @Override
+    public E removeEdge(V from, V to)
+    {
         Integer fromIndex = _vertexIndices.get(from);
         Integer toIndex = _vertexIndices.get(to);
 
-        if (fromIndex == null || toIndex == null) {
-            throw new NoSuchVertexException("One or more vertices not found.");
+        if (fromIndex == null || toIndex == null)
+        {
+            throw new NoSuchVertexException();
         }
 
-        if (_adjacencyMatrix[fromIndex][toIndex] == null) {
-            throw new NoSuchEdgeException("Edge not found from " + from + " to " + to + ".");
+        E removedEdge = _adjacencyMatrix[fromIndex][toIndex];
+        if (removedEdge == null)
+        {
+            throw new NoSuchEdgeException();
         }
 
         _adjacencyMatrix[fromIndex][toIndex] = null;
+        return removedEdge;
     }
 
-
+    /**
+     *
+     * @param v the label of the vertex whose degree is to be calculated
+     * @return
+     */
     @Override
     public int degree(V v)
     {
-        Integer index = _vertexIndices.get(vertex.getLabel());
+        Integer index = _vertexIndices.get(v);
         if (index == null)
         {
-            throw new NoSuchVertexException("Vertex not found.");
+            throw new NoSuchVertexException("Vertex with label '" + v + "' not found.");
         }
 
         int degree = 0;
@@ -211,6 +229,7 @@ public class MatrixGraph<V,E> extends DirectedGraph<V,E>
         }
         return degree;
     }
+
 
     /**
      *
@@ -310,10 +329,12 @@ public class MatrixGraph<V,E> extends DirectedGraph<V,E>
      */
     private void removeMatrixRow(int rowIndex)
     {
-        for (int i = rowIndex; i < _vertices.size(); i++)
+        for (int i = rowIndex; i < _vertices.size() - 1; i++)
         {
             System.arraycopy(_adjacencyMatrix[i + 1], 0, _adjacencyMatrix[i], 0, _adjacencyMatrix[i].length);
         }
+        // Nullify the last row after the shift.
+        Arrays.fill(_adjacencyMatrix[_vertices.size()], null);
     }
 
     /**
@@ -322,14 +343,14 @@ public class MatrixGraph<V,E> extends DirectedGraph<V,E>
      */
     private void removeMatrixColumn(int columnIndex)
     {
-        for (E[] row : _adjacencyMatrix)
+        for (int i = 0; i < _vertices.size(); i++)
         {
-            for (int i = columnIndex; i < row.length - 1; i++)
-            {
-                row[i] = row[i + 1];
-            }
+            System.arraycopy(_adjacencyMatrix[i], columnIndex + 1, _adjacencyMatrix[i], columnIndex, _adjacencyMatrix[i].length - columnIndex - 1);
+            _adjacencyMatrix[i][_vertices.size() - 1] = null;
+            // Nullify the last element in the row.
         }
     }
+
 
     /**
      * Resizes the adjacency matrix to accommodate more vertices.
