@@ -15,7 +15,8 @@ public class Vertex <V>
      */
     public Vertex(V label)
     {
-        if (label == null) {
+        if (label == null)
+        {
             throw new IllegalArgumentException("Vertex label cannot be null.");
         }
         this.label = label;
