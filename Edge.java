@@ -132,17 +132,4 @@ public class Edge<V, E>
      *
      * @return the hash code value for this edge.
      */
-
-    //TODO MIGHT HAVE TO DELETE AFTER RUNNING TESTS.
-    @Override
-    public int hashCode() {
-        // The numbers 31 and 17 are arbitrary primes that result in a well-distributed range of hash codes
-        // for collections of edges. The choice of these specific numbers is traditional to improve the
-        // performance of hash tables.
-        int result = 17;
-        result = 31 * result + (_source != null ? _source.hashCode() : 0);
-        result = 31 * result + (_destination != null ? _destination.hashCode() : 0);
-        result = 31 * result + (_label != null ? _label.hashCode() : 0);
-        return result;
-    }
 }

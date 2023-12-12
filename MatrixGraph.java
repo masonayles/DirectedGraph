@@ -7,10 +7,23 @@ import java.util.*;
  */
 public class MatrixGraph<V,E> extends DirectedGraph<V,E>
 {
+    private int _initialCapacity;
     private List<Vertex<V>> _vertices;
     private E[][] _adjacencyMatrix;
     private Map<V, Integer> _vertexIndices;
 
+    public MatrixGraph(int initialCapacity) {
+        this._initialCapacity = initialCapacity;
+        if (_initialCapacity <= 0) {
+            // Initialize with a default capacity if it's less than or equal to 0
+            _initialCapacity = 10;
+        }
+
+        // Initialize your graph here with the specified initial capacity
+        _vertices = new ArrayList<>();
+        _vertexIndices = new HashMap<>();
+        _adjacencyMatrix = (E[][]) new Object[_initialCapacity][_initialCapacity];
+    }
     /**
      * Constructs a new MatrixGraph.
      */
@@ -143,18 +156,23 @@ public class MatrixGraph<V,E> extends DirectedGraph<V,E>
      * @return
      */
     @Override
-    public boolean containsEdge(V from, V to)
-    {
+    public boolean containsEdge(V from, V to) {
+        if (from == null || to == null) {
+            throw new IllegalArgumentException("Vertex labels must not be null.");
+        }
+
         Integer fromIndex = _vertexIndices.get(from);
         Integer toIndex = _vertexIndices.get(to);
 
-        if (fromIndex == null || toIndex == null)
-        {
-            return false;
+        if (fromIndex == null || toIndex == null) {
+            throw new NoSuchVertexException();
         }
 
         return _adjacencyMatrix[fromIndex][toIndex] != null;
     }
+
+
+
 
     /**
      * @param u The label of the source vertex.

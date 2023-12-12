@@ -13,7 +13,7 @@ public class ListGraph<V,E> extends DirectedGraph<V, E>
     private Map<V, Vertex<V>> vertexMap;
 
     /**
-     *
+     * Initialize list
      */
     public ListGraph()
     {
@@ -60,7 +60,7 @@ public class ListGraph<V,E> extends DirectedGraph<V, E>
     @Override
     public Vertex<V> get(V v)
     {
-        // Check if the vertex exists in the adjacency list, which indicates the vertex is part of the graph
+
         if (!adjacencyList.containsKey(v))
         {
             throw new NoSuchVertexException();
@@ -119,12 +119,24 @@ public class ListGraph<V,E> extends DirectedGraph<V, E>
         Edge<V, E> newEdge = new Edge<>(fromVertex, toVertex, label);
 
         // Check for duplicate edge
-        if (adjacencyList.get(from).contains(newEdge)) {
+        if (hasEdge(fromVertex, toVertex)) {
             throw new DuplicateEdgeException();
         }
 
         adjacencyList.get(from).add(newEdge);
     }
+
+    // Helper method to check if an edge already exists between two vertices
+    private boolean hasEdge(Vertex<V> from, Vertex<V> to) {
+        List<Edge<V, E>> edges = adjacencyList.get(from.getLabel());
+        for (Edge<V, E> edge : edges) {
+            if (edge.getDestination() == to) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
 
 
@@ -206,25 +218,25 @@ public class ListGraph<V,E> extends DirectedGraph<V, E>
      * @return
      */
     @Override
-    public E removeEdge(V from, V to)
-    {
-        if (!adjacencyList.containsKey(from))
-        {
+    public E removeEdge(V from, V to) {
+        if (from == null || to == null) {
+            throw new IllegalArgumentException("Source and destination vertices must not be null.");
+        }
+
+        if (!adjacencyList.containsKey(from)) {
             throw new NoSuchVertexException();
         }
 
-        Iterator<Edge<V, E>> iterator = adjacencyList.get(from).iterator();
-        while (iterator.hasNext())
-        {
-            Edge<V, E> edge = iterator.next();
-            if (edge.getDestination().getLabel().equals(to))
-            {
-                iterator.remove();
+        for (Edge<V, E> edge : adjacencyList.get(from)) {
+            if (edge.getDestination().getLabel().equals(to)) {
+                adjacencyList.get(from).remove(edge);
                 return edge.getLabel();
             }
         }
+
         throw new NoSuchEdgeException();
     }
+
 
     /**
      * @param v the label of the vertex whose degree is to be calculated
@@ -233,8 +245,11 @@ public class ListGraph<V,E> extends DirectedGraph<V, E>
     @Override
     public int degree(V v)
     {
-        if (!adjacencyList.containsKey(v))
-        {
+        if (v == null) {
+            throw new IllegalArgumentException("Vertex must not be null.");
+        }
+
+        if (!adjacencyList.containsKey(v)) {
             throw new NoSuchVertexException();
         }
         return adjacencyList.get(v).size();
