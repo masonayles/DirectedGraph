@@ -25,6 +25,7 @@ public class DirectedGraphTest {
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
+
     @Test
     public void testAdd_DuplicateVertex_ShouldThrowDuplicateVertexException() {
         String vertexLabel = "DuplicateVertex";
@@ -147,9 +148,14 @@ public class DirectedGraphTest {
 
     @Test
     public void testContainsEdge_NonexistentVertex_ShouldThrowNoSuchVertexException() {
-        thrown.expect(NoSuchVertexException.class);
-        graph.containsEdge("NonexistentVertexU", "NonexistentVertexV");
+        try {
+            graph.containsEdge("NonexistentVertexU", "NonexistentVertexV");
+            fail("Expected NoSuchVertexException to be thrown");
+        } catch (NoSuchVertexException e) {
+            // Test passes if NoSuchVertexException is caught
+        }
     }
+
 
     @Test
     public void testGetEdge_ExistingEdge_ShouldReturnCorrectEdge() {

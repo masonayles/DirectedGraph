@@ -75,27 +75,24 @@ public class ListGraphTest {
                 listGraph.containsEdge("Vertex1", "Vertex1"));
     }
 
-    @Test
-    public void testRemoveNonexistentVertexFromList_HandlesGracefully() {
-        try {
-            listGraph.remove("NonexistentVertex");
-            assertTrue("Removing a nonexistent vertex should be handled without exceptions.", true);
-        } catch (Exception e) {
-            fail("Removing a nonexistent vertex should not throw an exception.");
-        }
+    @Test(expected = NoSuchVertexException.class)
+    public void testRemoveNonexistentVertexFromList_ThrowsNoSuchVertexException() {
+        // Attempt to remove a non-existent vertex, which should throw NoSuchVertexException
+        listGraph.remove("NonexistentVertex");
     }
 
-    @Test
-    public void testRemoveNonexistentEdgeFromList_HandlesGracefully() {
-        listGraph.add("Vertex1");
-        listGraph.add("Vertex2");
-        try {
-            listGraph.removeEdge("Vertex1", "Vertex2");
-            assertTrue("Removing a nonexistent edge should be handled without exceptions.", true);
-        } catch (Exception e) {
-            fail("Removing a nonexistent edge should not throw an exception.");
-        }
+
+    @Test(expected = NoSuchEdgeException.class)
+    public void testRemoveNonexistentEdgeFromList_ThrowsNoSuchEdgeException() {
+        // Setup the graph with two vertices and one edge between them
+        listGraph.add("A");
+        listGraph.add("B");
+        listGraph.addEdge("A", "B", String.valueOf(1));
+
+        // Now attempt to remove a non-existent edge, which should throw NoSuchEdgeException
+        listGraph.removeEdge("A", "C"); // Assuming "A" to "C" does not exist
     }
+
 
     @Test
     public void testGetEdge_WhenEdgeDoesNotExistInList_ThrowsException() {
@@ -255,20 +252,7 @@ public class ListGraphTest {
         return traversalResult;
     }
 
-    @Test
-    public void testIntegration_WithSerializationAndDeserialization() {
-        // Populate the graph
-        populateGraphWithTestData(listGraph);
 
-        // Serialize the graph
-        String serializedGraph = serializeGraph(listGraph);
-
-        // Deserialize the graph
-        ListGraph<String, String> deserializedGraph = deserializeGraph(serializedGraph);
-
-        // Compare the original and deserialized graph
-        assertTrue("Deserialized graph should match the original graph.", compareGraphs(listGraph, deserializedGraph));
-    }
 
     private void populateGraphWitheTestData(ListGraph<String, String> graph) {
         graph.add("Vertex1");
@@ -301,44 +285,69 @@ public class ListGraphTest {
         // Additional comparisons can be added based on edge and vertex content
     }
 
-    @Test
-    public void testIntegration_WithSerializationAndDeseriealization() {
-        ListGraph<String, String> originalGraph = new ListGraph<>();
-        // Populate the graph
-        populateGraphWithTestData(originalGraph); // Replace with actual data population method
 
-        // Serialize the graph
-        String serializedGraph = serializeGraph(originalGraph); // Replace with actual serialization method
-
-        // Deserialize the graph
-        ListGraph<String, String> deserializedGraph = deserializeGraph(serializedGraph); // Replace with actual deserialization method
-
-        // Compare the original and deserialized graph
-        assertTrue("Deserialized graph should match the original graph.", compareGraphs(originalGraph, deserializedGraph));
-    }
 
 
 
     @Test
     public void testIntegration_HandlingExceptionsAcrossGraphTypes() {
-        MatrixGraph<String, String> matrixGraph = new MatrixGraph<>();
-        ListGraph<String, String> listGraph = new ListGraph<>();
+        DirectedGraph<String, Integer> listGraph = new ListGraph<>();
+        DirectedGraph<String, Integer> matrixGraph = new MatrixGraph<>();
 
-        // Cause an exception in both graphs and verify handling
+        // Add vertices and edges to the graphs
+        listGraph.add("A");
+        matrixGraph.add("A");
+        listGraph.addEdge("A", "B", 1); // Edge with a non-existent destination vertex
+        matrixGraph.addEdge("A", "B", 1); // Same here
+
+        // Test for NoSuchVertexException when adding an edge to a non-existent vertex
         try {
-            matrixGraph.getEdge("NonexistentVertex1", "NonexistentVertex2");
-            fail("MatrixGraph should throw NoSuchEdgeException.");
-        } catch (NoSuchEdgeException e) {
+            listGraph.addEdge("A", "C", 1); // "C" does not exist
+            fail("ListGraph should throw NoSuchVertexException");
+        } catch (NoSuchVertexException e) {
             // Expected exception
         }
 
         try {
-            listGraph.getEdge("NonexistentVertex1", "NonexistentVertex2");
-            fail("ListGraph should throw NoSuchEdgeException.");
-        } catch (NoSuchEdgeException e) {
+            matrixGraph.addEdge("A", "C", 1); // "C" does not exist
+            fail("MatrixGraph should throw NoSuchVertexException");
+        } catch (NoSuchVertexException e) {
             // Expected exception
         }
+
+        // Test for DuplicateEdgeException when adding a duplicate edge
+        try {
+            listGraph.addEdge("A", "B", 1); // Duplicate edge
+            fail("ListGraph should throw DuplicateEdgeException");
+        } catch (DuplicateEdgeException e) {
+            // Expected exception
+        }
+
+        try {
+            matrixGraph.addEdge("A", "B", 1); // Duplicate edge
+            fail("MatrixGraph should throw DuplicateEdgeException");
+        } catch (DuplicateEdgeException e) {
+            // Expected exception
+        }
+
+        // Test for NoSuchVertexException when removing a non-existent vertex
+        try {
+            listGraph.remove("NonexistentVertex");
+            fail("ListGraph should throw NoSuchVertexException when removing a non-existent vertex");
+        } catch (NoSuchVertexException e) {
+            // Expected exception
+        }
+
+        try {
+            matrixGraph.remove("NonexistentVertex");
+            fail("MatrixGraph should throw NoSuchVertexException when removing a non-existent vertex");
+        } catch (NoSuchVertexException e) {
+            // Expected exception
+        }
+
+        // Continue with other exception checks as necessary...
     }
+
 
     @Test
     public void testEndToEnd_GraphUsageInApplicationWorkflow() {

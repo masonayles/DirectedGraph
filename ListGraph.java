@@ -79,36 +79,23 @@ public class ListGraph<V,E> extends DirectedGraph<V, E>
      * @return
      */
     @Override
-    public V remove(V v)
-    {
-        if (!adjacencyList.containsKey(v))
-        {
+    public V remove(V v) {
+        if (!adjacencyList.containsKey(v)) {
             throw new NoSuchVertexException();
         }
 
-        // Remove all edges connected to the vertex v
+        // Remove the vertex and its associated edge list
         adjacencyList.remove(v);
         vertexMap.remove(v);
 
-        // Also remove any edge from other vertices that lead to v
-        for (V key : adjacencyList.keySet())
-        {
-            List<Edge<V, E>> edgesList = adjacencyList.get(key);
-            List<Edge<V, E>> edgesToRemove = new ArrayList<>();
-            for (Edge<V, E> edge : edgesList)
-            {
-                if (edge.getDestination().equals(v))
-                {
-                    edgesToRemove.add(edge);
-                }
-            }
-            edgesList.removeAll(edgesToRemove);
+        // Remove any edge from other vertices that lead to 'v'
+        for (List<Edge<V, E>> edgesList : adjacencyList.values()) {
+            edgesList.removeIf(edge -> edge.getDestination().equals(v));
         }
-        // Remove the vertex from the vertexMap
-        vertexMap.remove(v);
 
         return v;
     }
+
 
     /**
      * @param from  the label of the source vertex
@@ -117,6 +104,12 @@ public class ListGraph<V,E> extends DirectedGraph<V, E>
      */
     @Override
     public void addEdge(V from, V to, E label) {
+        // Check for null vertices first
+        if (from == null || to == null) {
+            throw new IllegalArgumentException("Source and destination vertices must not be null.");
+        }
+
+        // Now check if the vertices exist in the graph
         if (!adjacencyList.containsKey(from) || !adjacencyList.containsKey(to)) {
             throw new NoSuchVertexException();
         }
@@ -135,6 +128,7 @@ public class ListGraph<V,E> extends DirectedGraph<V, E>
 
 
 
+
     /**
      * @param from the label of the source vertex
      * @param to   the label of the destination vertex
@@ -143,20 +137,20 @@ public class ListGraph<V,E> extends DirectedGraph<V, E>
     @Override
     public boolean containsEdge(V from, V to)
     {
-        if (!adjacencyList.containsKey(from))
-        {
-            return false;
+
+        if (!adjacencyList.containsKey(from) || !adjacencyList.containsKey(to)) {
+            throw new NoSuchVertexException();
         }
 
-        for (Edge<V, E> edge : adjacencyList.get(from))
-        {
-            if (edge.getDestination().equals(new Vertex<>(to)))
-            {
+
+        for (Edge<V, E> edge : adjacencyList.get(from)) {
+            if (edge.getDestination().equals(new Vertex<>(to))) {
                 return true;
             }
         }
         return false;
     }
+
 
     /**
      * @param from the label of the source vertex
@@ -180,6 +174,31 @@ public class ListGraph<V,E> extends DirectedGraph<V, E>
         }
         throw new NoSuchEdgeException();
     }
+
+    // Helper method to get the adjacency list representation of the graph
+    public Map<V, List<V>> getAdjacencyList() {
+        Map<V, List<V>> adjacencyListView = new HashMap<>();
+        for (Map.Entry<V, List<Edge<V, E>>> entry : adjacencyList.entrySet()) {
+            List<V> adjacencies = new ArrayList<>();
+            for (Edge<V, E> edge : entry.getValue()) {
+                adjacencies.add(edge.getDestination().getLabel());
+            }
+            adjacencyListView.put(entry.getKey(), adjacencies);
+        }
+        return adjacencyListView;
+    }
+    public List<V> getDestinationLabels(V source) {
+        List<Edge<V, E>> edges = adjacencyList.get(source);
+        if (edges == null) {
+            return Collections.emptyList();
+        }
+        List<V> destinations = new ArrayList<>();
+        for (Edge<V, E> edge : edges) {
+            destinations.add(edge.getDestination().getLabel());
+        }
+        return destinations;
+    }
+
 
     /**
      * @param from the label of the source vertex

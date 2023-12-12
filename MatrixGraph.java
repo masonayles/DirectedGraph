@@ -28,8 +28,11 @@ public class MatrixGraph<V,E> extends DirectedGraph<V,E>
     @Override
     public void add(V v)
     {
-        if (v == null || _vertexIndices.containsKey(v))
-        {
+        if (v == null) {
+            throw new IllegalArgumentException("Vertex must not be null.");
+        }
+
+        if (_vertexIndices.containsKey(v)) {
             throw new DuplicateVertexException();
         }
         Vertex<V> vertex = new Vertex<>(v);
@@ -76,10 +79,8 @@ public class MatrixGraph<V,E> extends DirectedGraph<V,E>
      * @return
      */
     @Override
-    public V remove(V v)
-    {
-        if (v == null || !_vertexIndices.containsKey(v))
-        {
+    public V remove(V v) {
+        if (v == null || !_vertexIndices.containsKey(v)) {
             throw new NoSuchVertexException();
         }
 
@@ -88,8 +89,7 @@ public class MatrixGraph<V,E> extends DirectedGraph<V,E>
         _vertices.remove(indexToRemove);
 
         // Shift rows and columns in the adjacency matrix
-        for (int i = indexToRemove; i < _vertices.size(); i++)
-        {
+        for (int i = indexToRemove; i < _vertices.size(); i++) {
             _vertexIndices.put(_vertices.get(i).getLabel(), i);
         }
 
@@ -102,6 +102,7 @@ public class MatrixGraph<V,E> extends DirectedGraph<V,E>
     }
 
 
+
     /**
      *
      * @param from
@@ -109,26 +110,31 @@ public class MatrixGraph<V,E> extends DirectedGraph<V,E>
      * @param label
      */
     @Override
-    public void addEdge(V from, V to, E label)
-    {
+    public void addEdge(V from, V to, E label) {
+        // Check for null vertices first
+        if (from == null || to == null) {
+            throw new IllegalArgumentException("Source and destination vertices must not be null.");
+        }
+
+        // Check for null edge labels
+        if (label == null) {
+            throw new IllegalArgumentException("Edge label must not be null.");
+        }
+
         Integer fromIndex = _vertexIndices.get(from);
         Integer toIndex = _vertexIndices.get(to);
 
-        if (fromIndex == null)
-        {
+        if (fromIndex == null || toIndex == null) {
             throw new NoSuchVertexException();
         }
-        if (toIndex == null)
-        {
-            throw new NoSuchVertexException();
-        }
-        if (_adjacencyMatrix[fromIndex][toIndex] != null)
-        {
+
+        if (_adjacencyMatrix[fromIndex][toIndex] != null) {
             throw new DuplicateEdgeException();
         }
 
         _adjacencyMatrix[fromIndex][toIndex] = label;
     }
+
 
     /**
      *
@@ -327,27 +333,21 @@ public class MatrixGraph<V,E> extends DirectedGraph<V,E>
      *
      * @param rowIndex
      */
-    private void removeMatrixRow(int rowIndex)
-    {
-        for (int i = rowIndex; i < _vertices.size() - 1; i++)
-        {
+    private void removeMatrixRow(int rowIndex) {
+        for (int i = rowIndex; i < _adjacencyMatrix.length - 1; i++) {
             System.arraycopy(_adjacencyMatrix[i + 1], 0, _adjacencyMatrix[i], 0, _adjacencyMatrix[i].length);
         }
-        // Nullify the last row after the shift.
-        Arrays.fill(_adjacencyMatrix[_vertices.size()], null);
     }
 
     /**
      *
      * @param columnIndex
      */
-    private void removeMatrixColumn(int columnIndex)
-    {
-        for (int i = 0; i < _vertices.size(); i++)
-        {
-            System.arraycopy(_adjacencyMatrix[i], columnIndex + 1, _adjacencyMatrix[i], columnIndex, _adjacencyMatrix[i].length - columnIndex - 1);
-            _adjacencyMatrix[i][_vertices.size() - 1] = null;
-            // Nullify the last element in the row.
+    private void removeMatrixColumn(int columnIndex) {
+        for (int i = 0; i < _adjacencyMatrix.length; i++) {
+            for (int j = columnIndex; j < _adjacencyMatrix[i].length - 1; j++) {
+                _adjacencyMatrix[i][j] = _adjacencyMatrix[i][j + 1];
+            }
         }
     }
 
@@ -384,5 +384,24 @@ public class MatrixGraph<V,E> extends DirectedGraph<V,E>
             }
         }
         return count;
+    }
+
+
+
+    //HELPERS
+
+    // Method to get the size of the internal matrix
+    public int getInternalMatrixSize() {
+        return _adjacencyMatrix.length; // Assuming _adjacencyMatrix is your internal matrix
+    }
+
+    // Method to get a specific value from the matrix
+    public E getMatrixValue(V source, V destination) {
+        Integer sourceIndex = _vertexIndices.get(source);
+        Integer destinationIndex = _vertexIndices.get(destination);
+        if (sourceIndex != null && destinationIndex != null) {
+            return _adjacencyMatrix[sourceIndex][destinationIndex];
+        }
+        return null;
     }
 }
